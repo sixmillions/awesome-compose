@@ -1,0 +1,20 @@
+services:
+  redis:
+    image: redis:5
+    networks:
+      - app-net
+  app:
+    build: app
+    ports:
+      - 5000:5000
+    environment:
+      - TZ=Asia/Shanghai
+    # flask requires SIGINT to stop gracefully
+    # (default stop signal from Compose is SIGTERM)
+    stop_signal: SIGINT
+    depends_on:
+      - redis
+    networks:
+      - app-net
+networks:
+  app-net:
