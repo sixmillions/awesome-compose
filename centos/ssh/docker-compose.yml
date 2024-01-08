@@ -1,0 +1,59 @@
+version: "3.8"
+x-logging: &default-logging
+  options:
+    max-size: "200m"
+    max-file: "5"
+  driver: json-file
+x-environment: &default-environment
+  TZ: Asia/Shanghai
+  LANG: C.UTF-8
+services:
+  centos7-manual:
+    image: centos:7
+    container_name: centos7-manual
+    hostname: six
+    ports:
+      - 1022:22
+    privileged: true
+    # network_mode: host
+    networks:
+      - centos-net
+    volumes:
+      - ./data:/opt/data
+    # stdin_open: true
+    tty: true
+    # restart: always
+    # command: /usr/sbin/init
+    environment: *default-environment
+    logging: *default-logging
+  
+  centos7-auto:
+    image: centos:7
+    container_name: centos7-auto
+    hostname: six
+    ports:
+      - 2022:22
+    privileged: true
+    networks:
+      - centos-net
+    volumes:
+      - ./data:/opt/data
+    # restart: always
+    command: 
+      - bash
+      - -c
+      - |
+          yum install -y initscripts openssh-server openssl openssl-devel passwd openssh-clients
+          yum install -y vim passwd net-tools wget
+          ssh-keygen -A
+          echo "123456" | passwd --stdin root
+          wget https://raw.githubusercontent.com/gdraheim/docker-systemctl-replacement/master/files/docker/systemctl.py -O /bin/systemctl
+          chmod a+x /bin/systemctl
+          systemctl start sshd.service
+          systemctl enable sshd.service
+          tail -f /dev/null
+    environment: *default-environment
+    logging: *default-logging
+
+networks:
+  centos-net:
